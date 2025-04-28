@@ -645,7 +645,7 @@ class AccessControlHooks {
         $canEdit = $user->isAllowed('edit');
     
         // Restrict history to 'paid' or 'sysop' group only
-        if ($wgRequest->getText('action') == 'history' && !$isPaid && !$isSysop) {
+        if ($wgRequest->getText('action') == 'history' && !$isPaid && !$isSysop || $wgRequest->getText('oldid') !== '' && !$isPaid && !$isSysop) {
             $wgActions['history'] = false;
             self::doRedirect('accesscontrol-redirect-users');
             return;
