@@ -634,26 +634,27 @@ class AccessControlHooks {
 	/**
 	 * Preventive deny rights for anonymous users.
 	 */
-	private static function anonymousDeny() {
+	// ...existing code...
+    private static function anonymousDeny() {
         global $wgActions, $wgAnonymousUser, $wgRequest, $wgAccessToHistory;
         $user = RequestContext::getMain()->getUser();
         $userGroupManager = MediaWikiServices::getInstance()->getUserGroupManager();
     
+        $isSysop = in_array('sysop', $userGroupManager->getUserGroups($user));
         $isPaid = in_array('paid', $userGroupManager->getUserGroups($user));
         $canEdit = $user->isAllowed('edit');
     
-        // Restrict history to 'paid' group only
-        if ($wgRequest->getText('action') == 'history' && !$isPaid) {
+        // Restrict history to 'paid' or 'sysop' group only
+        if ($wgRequest->getText('action') == 'history' && !$isPaid && !$isSysop) {
             $wgActions['history'] = false;
             self::doRedirect('accesscontrol-redirect-users');
             return;
         }
     
-        // Restrict view source to only users with edit rights
+        // Restrict view source to only 'sysop'
         if (
-            $wgRequest->getText('action') == 'edit'
-            && $wgRequest->getText('oldid') >= 0
-            && !$canEdit
+            $wgRequest->getText('action') === 'edit'
+            && !$isSysop
         ) {
             $wgActions['edit'] = false;
             self::doRedirect('accesscontrol-redirect-users');
@@ -680,11 +681,11 @@ class AccessControlHooks {
                     } elseif ($wgRequest->getText('diff') >= 0) {
                         // self::printDebug( 'anonymous user can view diferences of page' ); // DEBUG INFO
                     } elseif ($wgRequest->getText('action') == 'edit'
-                        && $wgRequest->getText('oldid') >= 0) {
+                        && $wgRequest->getText('oldid') !== '') {
                         // self::printDebug( 'anonymous user can view source of page' ); // DEBUG INFO
                     } elseif (($wgRequest->getText('direction') == 'prev'
                             || $wgRequest->getText('direction') == 'next')
-                                && $wgRequest->getText('oldid') >= 0) {
+                                && $wgRequest->getText('oldid') !== '') {
                                     // self::printDebug( 'anonymous user can view differences of page' ); // DEBUG INFO
                     } else {
                         $wgActions['edit'] = false;
@@ -1258,18 +1259,25 @@ class AccessControlHooks {
         $user = RequestContext::getMain()->getUser();
         $userGroupManager = MediaWikiServices::getInstance()->getUserGroupManager();
     
+        $isSysop = in_array('sysop', $userGroupManager->getUserGroups($user));
         $isPaid = in_array('paid', $userGroupManager->getUserGroups($user));
         $canEdit = $user->isAllowed('edit');
     
         if (!$wgReadOnlyUser) {
-            // Restrict history to 'paid' group only
-            if (!$isPaid) {
+            // Restrict history to 'paid' or 'sysop' group only
+            if (!$isPaid && !$isSysop) {
                 $wgActions['history'] = false;
             }
-            // Restrict view source to only users with edit rights
-            if (!$canEdit) {
+            // Restrict view source to only 'sysop'
+            if (!$isSysop) {
                 $wgActions['edit'] = false;
+                // Redirect immediately if user tries to access view source
+            $action = RequestContext::getMain()->getRequest()->getText('action');
+            if ($action === 'edit') {
+                self::doRedirect('accesscontrol-redirect-users');
+                return;
             }
+        }
             $wgActions['submit'] = false;
             $wgActions['info'] = false;
             $wgActions['raw'] = false;
