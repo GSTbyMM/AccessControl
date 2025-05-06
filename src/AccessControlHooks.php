@@ -660,6 +660,16 @@ class AccessControlHooks {
             self::doRedirect('accesscontrol-redirect-users');
             return;
         }
+
+				// Restrict mpdf to only 'paid' or 'sysop'
+        if (
+						$wgRequest->getText('action') === 'mpdf'
+						&& !$isPaid && !$isSysop
+				) {
+						$wgActions['mpdf'] = false;
+						self::doRedirect('accesscontrol-redirect-users');
+						return;
+				}
     
         // Existing anonymous logic
         if (!$wgAnonymousUser) {
