@@ -52,7 +52,7 @@ class AccessControlHooks {
 		if ( count( $hledat ) == 1 ) {
 		// Main namespace
 			preg_match(
-				'/\{\{(\s|\r|\n)*:' . $hledat[0] . '(\s|\r|\n)*(\||\})/',
+				'~\{\{(\s|\r|\n)*:' . preg_quote($hledat[0], '~') . '(\s|\r|\n)*(\||\})~',
 				$articleText,
 				$include,
 				PREG_UNMATCHED_AS_NULL
@@ -63,11 +63,11 @@ class AccessControlHooks {
 		} else {
 		// Problem is maainly with the templates
 			preg_match(
-				'/\{\{' . $hledat[1] . '(\s|\r|\n)*(\||\})/',
+				'~\{\{' . preg_quote($hledat[1], '~') . '(\s|\r|\n)*(\||\})~',
 				$articleText,
 				$include,
 				PREG_UNMATCHED_AS_NULL
-				);
+		);
 			if ( $include ) {
 				return false;
 			}
