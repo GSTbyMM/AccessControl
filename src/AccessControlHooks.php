@@ -641,7 +641,7 @@ class AccessControlHooks {
         $userGroupManager = MediaWikiServices::getInstance()->getUserGroupManager();
     
         $isSysop = in_array('sysop', $userGroupManager->getUserGroups($user));
-        $isPaid = in_array('paid', $userGroupManager->getUserGroups($user));
+        $isPaid = in_array('Members', $userGroupManager->getUserGroups($user));
         $canEdit = $user->isAllowed('edit');
     
         // Restrict history to 'paid' or 'sysop' group only
@@ -1270,7 +1270,7 @@ class AccessControlHooks {
         $userGroupManager = MediaWikiServices::getInstance()->getUserGroupManager();
     
         $isSysop = in_array('sysop', $userGroupManager->getUserGroups($user));
-        $isPaid = in_array('paid', $userGroupManager->getUserGroups($user));
+        $isPaid = in_array('Members', $userGroupManager->getUserGroups($user));
         $canEdit = $user->isAllowed('edit');
     
         if (!$wgReadOnlyUser) {
