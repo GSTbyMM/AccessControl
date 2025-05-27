@@ -641,18 +641,40 @@ class AccessControlHooks {
         $userGroupManager = MediaWikiServices::getInstance()->getUserGroupManager();
     
         $isSysop = in_array('sysop', $userGroupManager->getUserGroups($user));
-        $isPaid = in_array('Members', $userGroupManager->getUserGroups($user));
+        $isPaid = in_array('paid', $userGroupManager->getUserGroups($user));
+        $canEdit = $user->isAllowed('edit');
+    
+        // Restrict history to 'paid' or 'sysop' group only
+        if ($wgRequest->getText('action') == 'history' && !$isPaid && !$isSysop || $wgRequest->getText('oldid') !== '' && !$isPaid && !$isSysop) {
+            $wgActions['history'] = false;
+            self::doRedirect('accesscontrol-redirect-users');
+            return;
+        }
+    
+        // Restrict view source to only 'sysop'
+        if (
+            $wgRequest->getText('action') === 'edit'
+            && !$isSysop
+        ) {
+            $wgAct        $isPaid = in_array('Members', $userGroupManager->getUserGroups($user));
         $canEdit = $user->isAllowed('edit');
 
-				// Restrict Special:Preferences to sysop only
+				// Restrict Template: to sysop only
+        $titleText = $wgRequest->getText('title');
+        if (preg_match('/^Template:/i', $titleText) && !$isSysop) {
+            $wgActions['view'] = false;
+            self::doRedirect('accesscontrol-redirect-users');
+            return;
+        }
+  
+				 // Restrict Special:Preferences to sysop only
         $titleText = $wgRequest->getText('title');
         if (preg_match('/^Special:Preferences$/i', $titleText) && !$isSysop) {
             $wgActions['view'] = false;
             self::doRedirect('accesscontrol-redirect-users');
             return;
-        }
-				
-        // Restrict history to 'paid' or 'sysop' group only
+        }      
+				// Restrict history to 'paid' or 'sysop' group only
         if ($wgRequest->getText('action') == 'history' && !$isPaid && !$isSysop || $wgRequest->getText('oldid') !== '' && !$isPaid && !$isSysop) {
             $wgActions['history'] = false;
             self::doRedirect('accesscontrol-redirect-users');
@@ -1279,34 +1301,7 @@ class AccessControlHooks {
     
         $isSysop = in_array('sysop', $userGroupManager->getUserGroups($user));
         $isPaid = in_array('Members', $userGroupManager->getUserGroups($user));
-        $canEdit = $user->isAllowed('edit');
-    
-        if (!$wgReadOnlyUser) {
-            // Restrict history to 'paid' or 'sysop' group only
-            if (!$isPaid && !$isSysop) {
-                $wgActions['history'] = false;
-            }
-            // Restrict view source to only 'sysop'
-            if (!$isSysop) {
-                $wgActions['edit'] = false;
-                // Redirect immediately if user tries to access view source
-            $action = RequestContext::getMain()->getRequest()->getText('action');
-            if ($action === 'edit') {
-                self::doRedirect('accesscontrol-redirect-users');
-                return;
-            }
-        }
-            $wgActions['submit'] = false;
-            $wgActions['info'] = false;
-            $wgActions['raw'] = false;
-            $wgActions['delete'] = false;
-            $wgActions['revert'] = false;
-            $wgActions['revisiondelete'] = false;
-            $wgActions['rollback'] = false;
-            $wgActions['markpatrolled'] = false;
-            $wgActions['formedit'] = false;
-            $wgOut->addInlineScript("document.getElementById('ca-history') && document.getElementById('ca-history').parentNode.removeChild(document.getElementById('ca-history'));");
-            $wgOut->addInlineScript("document.getElementById('ca-edit') && document.getElementById('ca-edit').parentNode.removeChild(document.getElementById('ca-edit'));");
+ut->addInlineScript("document.getElementById('ca-edit') && document.getElementById('ca-edit').parentNode.removeChild(document.getElementById('ca-edit'));");
             $wgOut->addInlineScript("document.getElementById('ca-ve-edit') && document.getElementById('ca-ve-edit').parentNode.removeChild(document.getElementById('ca-ve-edit'));");
             $wgOut->addInlineScript("Array.from(document.getElementsByClassName('mw-editsection')).map(element => element.parentNode.removeChild(element));");
             $wgReadOnlyUser = true;
