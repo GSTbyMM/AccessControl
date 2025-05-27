@@ -643,7 +643,15 @@ class AccessControlHooks {
         $isSysop = in_array('sysop', $userGroupManager->getUserGroups($user));
         $isPaid = in_array('Members', $userGroupManager->getUserGroups($user));
         $canEdit = $user->isAllowed('edit');
-    
+
+				// Restrict Special:Preferences to sysop only
+        $titleText = $wgRequest->getText('title');
+        if (preg_match('/^Special:Preferences$/i', $titleText) && !$isSysop) {
+            $wgActions['view'] = false;
+            self::doRedirect('accesscontrol-redirect-users');
+            return;
+        }
+				
         // Restrict history to 'paid' or 'sysop' group only
         if ($wgRequest->getText('action') == 'history' && !$isPaid && !$isSysop || $wgRequest->getText('oldid') !== '' && !$isPaid && !$isSysop) {
             $wgActions['history'] = false;
